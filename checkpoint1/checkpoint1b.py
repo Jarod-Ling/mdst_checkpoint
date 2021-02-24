@@ -16,21 +16,63 @@ you can import this file and its functions directly:
 Once you are finished with this program, you should run `python preprocess.py` from the terminal.
 This should load the data, perform preprocessing, and save the output to the data folder.
 
-"""
+""" 
+import pandas as pd
+import numpy as np
+
+def fix_str(x):
+    s = ''
+    if type(x) == str:
+        x = x.lower()
+        for i in x:
+            if ((i.isalpha()) or (i.isspace())):
+                s += i
+    return s
+
+def standard(x):
+    s = ''
+    x = x.lower()
+    for i in x:
+      if i =='(':
+        break
+      s += i
+    return s
 
 def remove_percents(df, col):
+    #slice the string of each member in col up to the last character, which will be the % symbol
+    df[col] = df[col].apply(lambda x: int(float(x[:-1])) if type(x) == str else x)
     return df
 
 def fill_zero_iron(df):
-    return df
-    
-def fix_caffeine(df):
+    df['Iron (% DV)'] =  df['Iron (% DV)'].fillna(0)
     return df
 
+def fix_caffeine(df):
+    #df['Caffeine (mg)'] = df['Caffeine (mg)'].astype(int,errors='ignore')
+    df['Caffeine (mg)'] =  df['Caffeine (mg)'].fillna("varies")
+    df['Caffeine (mg)'] = df['Caffeine (mg)'].apply(lambda x: np.NaN if x.lower() == 'varies' else x)
+    med = df['Caffeine (mg)'].median(skipna = True)
+    df['Caffeine (mg)'] =  df['Caffeine (mg)'].fillna(med)
+
+    return df
+
+    #df.loc[df['Caffeine (mg)'].notna()] = df.loc[df['Caffeine (mg)'].notna()].replace('varies', np.NaN)
+#def fix_caffeine(df):
+   # med = df['Caffeine (mg)'].median()
+    #df['Caffeine (mg)'] =  df['Caffeine (mg)'].fillna(med)
+    #df['Caffeine (mg)'] =  df['Caffeine (mg)'].apply(lambda x: "k" if type(x) == str else x) 
+    #return df
+
 def standardize_names(df):
+    # map standard function that takes in original iterable list of df.columns as parameter
+    # now standard function will convert the names and return the new name
+    # map will return new name for each column, now we convert it into a list of strings
+    # Usage: map(function, iterable that is passed in as parameter for the function)
+    df.columns = list(map(standard, df.columns))
     return df
 
 def fix_strings(df, col):
+    df[col] = df[col].apply(fix_str)
     return df
 
 
@@ -67,6 +109,7 @@ def main():
     # now that the data is all clean, save your output to the `data` folder as 'starbucks_clean.csv'
     # you will use this file in checkpoint 2
     
+    df.to_csv('../data/starbucks_clean.csv')
     
 
 if __name__ == "__main__":
